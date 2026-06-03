@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.env
+.env.*
+
+# Node
+node_modules/
+.next/
+out/
+dist/
+
+# ML artifacts (tracked dirs, ignore binaries)
+ml_artifacts/**/*.pkl
+ml_artifacts/**/*.joblib
+ml_artifacts/**/*.json
+
+# IDE / OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Logs / coverage
+*.log
+.coverage
+htmlcov/
+.pytest_cache/
