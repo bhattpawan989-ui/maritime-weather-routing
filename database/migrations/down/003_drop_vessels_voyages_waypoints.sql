@@ -1,0 +1,3 @@
+DROP TABLE IF EXISTS route_waypoints;
+DROP TABLE IF EXISTS voyages;
+DROP TABLE IF EXISTS vessels;
