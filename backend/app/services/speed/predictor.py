@@ -1,11 +1,11 @@
 import math
 
-from app.schemas.common import WeatherConditions
+from app.core.config import settings
 from app.schemas.speed import PredictSpeedRequest, PredictSpeedResponse
 from app.utils.geo import angle_diff_deg
 
 
-def predict_speed(payload: PredictSpeedRequest) -> PredictSpeedResponse:
+def _predict_speed_heuristic(payload: PredictSpeedRequest) -> PredictSpeedResponse:
     weather = payload.weather
     current_angle = angle_diff_deg(
         weather.current_direction_deg, payload.vessel_heading_deg
@@ -23,3 +23,15 @@ def predict_speed(payload: PredictSpeedRequest) -> PredictSpeedResponse:
         effective_sog_knots=round(effective_sog, 2),
         delay_hours=round(delay_hours, 2),
     )
+
+
+def predict_speed(payload: PredictSpeedRequest) -> PredictSpeedResponse:
+    if settings.ml_enabled:
+        from app.ml.inference import get_inference_service
+
+        service = get_inference_service()
+        if service.speed_available:
+            return service.speed.predict(payload)
+    if settings.ml_fallback_to_heuristic:
+        return _predict_speed_heuristic(payload)
+    raise RuntimeError("Speed ML model unavailable and heuristic fallback is disabled")

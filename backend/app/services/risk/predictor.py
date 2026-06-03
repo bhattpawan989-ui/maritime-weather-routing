@@ -1,5 +1,5 @@
+from app.core.config import settings
 from app.models.enums import RiskLevel
-from app.schemas.common import WeatherConditions
 from app.schemas.risk import PredictRiskRequest, PredictRiskResponse, RiskLevelLabel
 from app.utils.geo import angle_diff_deg
 
@@ -16,7 +16,7 @@ def risk_level_to_enum(level: RiskLevelLabel) -> RiskLevel:
     return RiskLevel(level.value)
 
 
-def predict_risk(payload: PredictRiskRequest) -> PredictRiskResponse:
+def _predict_risk_heuristic(payload: PredictRiskRequest) -> PredictRiskResponse:
     weather = payload.weather
     relative = angle_diff_deg(weather.wind_direction_deg, payload.vessel_heading_deg)
     wind_factor = min(weather.wind_speed_knots / 50.0, 1.0) * 40
@@ -33,3 +33,24 @@ def predict_risk(payload: PredictRiskRequest) -> PredictRiskResponse:
         risk_level=_score_to_level(score),
         relative_heading_deg=round(relative, 2),
     )
+
+
+def predict_risk(payload: PredictRiskRequest) -> PredictRiskResponse:
+    if settings.ml_enabled:
+        from app.ml.inference import get_inference_service
+
+        service = get_inference_service()
+        if service.risk_available:
+            return service.risk.predict(payload)
+    if settings.ml_fallback_to_heuristic:
+        return _predict_risk_heuristic(payload)
+    raise RuntimeError("Risk ML model unavailable and heuristic fallback is disabled")
+
+
+def get_risk_model_version() -> str:
+    from app.ml.inference import get_inference_service
+
+    service = get_inference_service()
+    if service.risk_available:
+        return service.risk.version
+    return "heuristic-v1"

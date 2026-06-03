@@ -14,7 +14,7 @@ from app.models.waypoint import RouteWaypoint
 from app.models.weather import WeatherData, WeatherRisk
 from app.schemas.laycan import LaycanAnalysisResult
 from app.schemas.route import AnalyzeRouteRequest, WaypointAnalysis
-from app.services.risk.predictor import risk_level_to_enum
+from app.services.risk.predictor import get_risk_model_version, risk_level_to_enum
 
 
 def persist_route_analysis(
@@ -78,7 +78,7 @@ def persist_route_analysis(
                 risk_score=analysis.risk.risk_score,
                 risk_level=risk_level_to_enum(analysis.risk.risk_level),
                 relative_heading_deg=analysis.risk.relative_heading_deg,
-                model_version="heuristic-v1",
+                model_version=get_risk_model_version(),
             )
         )
         db.add(

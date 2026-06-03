@@ -2,7 +2,7 @@ from app.core.config import settings
 from app.schemas.fuel import PredictFuelRequest, PredictFuelResponse
 
 
-def predict_fuel(payload: PredictFuelRequest) -> PredictFuelResponse:
+def _predict_fuel_heuristic(payload: PredictFuelRequest) -> PredictFuelResponse:
     price = payload.fuel_price_usd_per_mt or settings.fuel_price_usd_per_mt
     weather_factor = 1.0 + min(payload.weather.wave_height_m / 5.0, 1.0) * 0.15
     weather_factor += min(payload.weather.wind_speed_knots / 40.0, 1.0) * 0.1
@@ -14,3 +14,15 @@ def predict_fuel(payload: PredictFuelRequest) -> PredictFuelResponse:
         fuel_consumption_mt=round(fuel_mt, 4),
         fuel_cost_usd=round(fuel_mt * price, 2),
     )
+
+
+def predict_fuel(payload: PredictFuelRequest) -> PredictFuelResponse:
+    if settings.ml_enabled:
+        from app.ml.inference import get_inference_service
+
+        service = get_inference_service()
+        if service.fuel_available:
+            return service.fuel.predict(payload)
+    if settings.ml_fallback_to_heuristic:
+        return _predict_fuel_heuristic(payload)
+    raise RuntimeError("Fuel ML model unavailable and heuristic fallback is disabled")
