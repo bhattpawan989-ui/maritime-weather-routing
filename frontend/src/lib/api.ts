@@ -17,7 +17,7 @@ import type {
   // ─── Config ───────────────────────────────────────────────────────────────────
   
   const BASE_URL =
-    process.env.NEXT_PUBLIC_API_URL ?? 'http://127.0.0.1:8000';
+    process.env.NEXT_PUBLIC_API_URL ?? 'https://maritime-weather-routing.onrender.com';
 
   function formatErrorDetail(detail: unknown): string {
     if (typeof detail === 'string') return detail;
@@ -111,7 +111,7 @@ import type {
       });
     } catch {
       throw {
-        message: 'Cannot reach the backend. Is it running on port 8000?',
+        message: 'Cannot reach the API server. Check your connection or try again later.',
         status: 0,
       };
     }
